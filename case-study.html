@@ -268,7 +268,7 @@
                 <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
                     <div class="px-8 py-5 border-b border-slate-100 flex items-center justify-between" style="background: linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);">
                         <div>
-                            <div class="text-white font-bold text-base tracking-tight">Tournament-Wide Kill Line Logs</div>
+                            <div class="text-white font-bold text-base tracking-tight">Subject's Kills Across the Tournament</div>
                             <div class="text-white/40 text-[10px] font-mono mt-0.5 uppercase tracking-widest">Full Market Record — All Matches</div>
                         </div>
                         <div class="text-[10px] font-mono px-3 py-1 rounded-full border font-bold" style="border-color:#c9a84c; color:#c9a84c; background:rgba(201,168,76,0.08);">
@@ -280,14 +280,10 @@
                         <table class="tournament-table w-full border-collapse">
                             <thead>
                                 <tr>
-                                    <th class="text-left">Match</th>
-                                    <th class="text-left">Map #</th>
-                                    <th class="text-left">Map Name</th>
-                                    <th class="text-right">Opening Line</th>
-                                    <th class="text-right">Closing Line</th>
-                                    <th class="text-center">Movement</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-left">Notes</th>
+                                    <th class="text-left">Match (Map)</th>
+                                    <th class="text-left">Map</th>
+                                    <th class="text-center">Kills Line</th>
+                                    <th class="text-center">Kills</th>
                                 </tr>
                             </thead>
                             <tbody id="tournamentTableBody">
@@ -296,20 +292,11 @@
                         </table>
                     </div>
 
-                    <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                    <div class="px-8 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between flex-wrap gap-3">
                         <div class="text-[10px] text-slate-400 font-mono uppercase tracking-widest">
                             Source: Betting Exchange Archives • Tournament Window
                         </div>
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center space-x-1.5">
-                                <span class="badge-stable">Stable</span>
-                                <span class="text-[10px] text-slate-400">No significant movement</span>
-                            </div>
-                            <div class="flex items-center space-x-1.5">
-                                <span class="badge-drop">Flagged</span>
-                                <span class="text-[10px] text-slate-400">Anomalous pre-veto drop</span>
-                            </div>
-                        </div>
+                        <span class="badge-drop">⚠ Match X (2) — Anomalous pre-veto drop: 14.5 → 12.5</span>
                     </div>
                 </div>
             </div>
@@ -388,10 +375,18 @@
     <script>
         // ── DATA ──
         const tournamentLogs = [
-            { match: 'Match 26', map: '1', mapName: 'Mirage',  open: '12.5', close: '12.5', delta: 0,    flagged: false, notes: 'Normal pre-match variance' },
-            { match: 'Match 26', map: '2', mapName: 'Inferno', open: '12.5', close: '12.5', delta: 0,    flagged: false, notes: 'Normal pre-match variance' },
-            { match: 'Match X',  map: '2', mapName: 'Nuke',    open: '14.5', close: '12.5', delta: -2.0, flagged: true,  notes: '⚠ Drop at T-75 min, pre-veto' },
-            { match: 'Match 40', map: '3', mapName: 'Dust II', open: '13.5', close: '13.5', delta: 0,    flagged: false, notes: 'Normal pre-match variance' },
+            { match: 'Match 26 (1)', mapName: 'Inferno',  killsLine: '12.5',          kills: 20,  flagged: false },
+            { match: 'Match 26 (2)', mapName: 'Train',    killsLine: '12.5',          kills: 20,  flagged: false },
+            { match: 'Match X (1)',  mapName: 'Overpass', killsLine: '13.5',          kills: 12,  flagged: false },
+            { match: 'Match X (2)',  mapName: 'Nuke',     killsLine: '14.5 → 12.5',  kills: 9,   flagged: true  },
+            { match: 'Match X (3)',  mapName: 'Ancient',  killsLine: '13.5',          kills: 10,  flagged: false },
+            { match: 'Match 35 (1)', mapName: 'Mirage',   killsLine: '13.5',          kills: 18,  flagged: false },
+            { match: 'Match 35 (2)', mapName: 'Dust 2',   killsLine: '13.5',          kills: 12,  flagged: false },
+            { match: 'Match 38 (1)', mapName: 'Mirage',   killsLine: '12.5 → 13.5',  kills: 32,  flagged: false },
+            { match: 'Match 38 (2)', mapName: 'Dust 2',   killsLine: '12.5 → 13.5',  kills: 10,  flagged: false },
+            { match: 'Match 40 (1)', mapName: 'Nuke',     killsLine: '13.5',          kills: 12,  flagged: false },
+            { match: 'Match 40 (2)', mapName: 'Dust 2',   killsLine: '13.5',          kills: 13,  flagged: false },
+            { match: 'Match 40 (3)', mapName: 'Inferno',  killsLine: '13.5',          kills: 23,  flagged: false },
         ];
 
         const caseData = {
@@ -439,19 +434,18 @@
                 const tr = document.createElement('tr');
                 if (row.flagged) tr.classList.add('flagged');
 
-                const deltaTxt = row.delta === 0
-                    ? '<span class="badge-stable">Stable</span>'
-                    : `<span class="badge-drop">${row.delta > 0 ? '+' : ''}${row.delta.toFixed(1)}</span>`;
+                const lineHasMove = row.killsLine.includes('→');
+                const lineTxt = lineHasMove && !row.flagged
+                    ? `<span style="color:#1e3a5f" class="font-mono font-semibold">${row.killsLine}</span>`
+                    : row.flagged
+                        ? `<span class="font-mono font-bold">${row.killsLine}</span>`
+                        : `<span class="font-mono">${row.killsLine}</span>`;
 
                 tr.innerHTML = `
-                    <td class="font-mono font-semibold">${row.match}</td>
-                    <td class="text-center font-mono">Map ${row.map}</td>
-                    <td>${row.mapName}</td>
-                    <td class="text-right font-mono">${row.open}</td>
-                    <td class="text-right font-mono">${row.close}</td>
-                    <td class="text-center">${deltaTxt}</td>
-                    <td class="text-center">${row.flagged ? '<span class="badge-drop">⚠ FLAGGED</span>' : '<span class="badge-stable">OK</span>'}</td>
-                    <td class="text-slate-500 text-[11px]">${row.notes}</td>
+                    <td class="font-semibold">${row.match}</td>
+                    <td class="italic text-slate-500">${row.mapName}</td>
+                    <td class="text-center">${lineTxt}</td>
+                    <td class="text-center font-black text-base">${row.kills}</td>
                 `;
                 tbody.appendChild(tr);
             });
